@@ -1,0 +1,393 @@
+* Introduction
+
+A statistical model which provides risk predictions can be used for
+counseling patients and to advice treatment decisions. This article
+discusses statistical tests for comparing risk prediction models based
+on right censored data. The tests can also be used to see if a new
+marker increases the predictive ability of an already existing risk
+prediction model, a frequently encountered task
+citep:kattan2003judging,pepe2004limitations.
+
+For a fixed time horizon $t$, a risk prediction model is a tool which
+forecasts the probability that the event of interest occurs before
+time $t$. Generally the larger the value of \(t\) the higher the risk.
+For certain events such as death the risk approaches 100% as the time
+horizon increases. There may also be competing risks which prevent the
+event of interest and hence reduce its absolute risk.
+
+We consider risk prediction models that base the prediction on a
+p-dimensional vector of covariates $X=(X_1,\dots,X_p)$ which is
+measurable at the time of prediction. Let $r^{(1)}$ and $r^{(2)}$
+denote two such risk prediction models and $r^{(1)}(t|X)$ and
+$r^{(2)}(t|X)$ the corresponding predicted risks of an event in the
+time interval $[0,t]$ for a subject characterized by covariate X. Let
+also $Y(t)$ denote the event status at time $t$, i.e., a random
+variable which takes the value one if the event has occurred before
+time $t$, and zero otherwise.
+
+To measure the predictive performance we use the squared residuals
+(Brier scores) between the binary event status and the predicted
+risk. The smaller the Brier score the better the prediction
+citep:brier1950. In uncensored data, differences in prediction
+performance can be tested with the one-sample t-test or the signed
+Wilcoxon rank test applied to the residual differences:
+#+BEGIN_LaTeX
+\begin{equation}\label{eq:1}
+  \theta(t)=\left\{Y(t)-r^{(1)}(t|X)\right\}^2 - \left\{Y(t) - r^{(2)}(t|X) \right\}^2.
+\end{equation}
+#+END_LaTeX
+However, in practice there will often be some subjects lost to
+follow-up before the time horizon and the analysis needs to be based
+on right censored data. If a subject is lost to follow-up in an event
+free state before time $t$, the event status Y(t) and hence also the
+value of $\theta(t)$ remain unknown. To deal with right censored data,
+\citep{graf99} derived inverse of the probability of censoring weights
+for the Brier scores of single risk prediction model. Under standard
+conditions for inference in right censored data, it can then be shown
+that the average of the censoring weigthed Brier scores is an unbiased
+estimate of the population average Brier score
+\citep{gerds2006consistent}. This naturally leads to the idea to apply
+the one-sample t-test and signed Wilcoxon rank test to the differences
+of the weighted residuals in right censored data. However, we show
+that this is not working out and demonstrate that a standard paired
+test applied to the inverse probability of censored weighted residuals
+can have an inflated type-I error. 
+# For the signed Wilcoxon rank test this occurs because the sign of
+# the residual differences does not change by the weighting.
+# For the paired t-test the problem is that the weighted residuals are
+# not identically and independently distributed.
+We then develop unbiased tests and derive their asymptotic
+distributions under the null. The tests are directly applicable in an
+external validation study.
+
+TODO: 
+ - Review literature on tests for other measures of prediction error incl. likelihood ratio tests for Cox
+ - Discuss if the t-test-like statistic for Brier residuals can be combined with a test statistic for discrimination only AUC(t) to yield a test for calibration only.
+ - Combine test against null model (zero discrimination) with test against conventional model?
+
+* Comparing two risk prediction models
+
+Consider two risk prediction models \(r^{(1)}\) and \(r^{(2)}\) and
+assume that these are deterministic mappings from the covariate space
+to the probability interval \([0,1]\). For a new subject with
+covariate value \(X\) and event time outcome \((T,D)\), where \(T\) is
+the time to an event \(D\in\{1,2,\dots,K\}\), we wish to compare the
+predictive performance of the two models. We declare the first of the
+\(K\) mutually exclusive events to be the event of interest, fix the
+prediction horizon at \(t\), and define the outcome status as
+\(Y(t)=I\{T\le t, D=1\}\).
+
+We assume that instead of $(T,D,X)$ it is only possible to observe
+right censored data $(\tilde T,\tilde D,X,\Delta)$ where $C$ is the
+censoring time, $\Delta=1\{T\le C\}$, $\tilde T=\min(T,C)$, $\tilde
+D=\Delta D$. We consider a data set \(\{(\tilde
+T_i,X_i,\Delta_i)\}_{i=1}^n\) which consists of \(n\) independent
+draws from the distribution of $(\tilde T,X,\Delta)$. We assume that
+these data were not used when the rival prediction models were built,
+i.e., either a setting with external validation data or obtained by
+splitting the available data into a learning and a validation set.
+
+** Null hypotheses
+
+We consider the following two null hypotheses:
+\begin{align*}
+H^1_0&:\E_{(T,D,X)}\{\theta(t)=0\},\\
+H^2_0&:\P_{(T,D,X)}\{\theta(t)<0\}=0.5.
+\end{align*}
+The interpretation of $H^1_0$ is that the average Brier scores of the
+two risk prediction models are equal. The interpretation of $H^2_0$ is
+that the probability that a random subject can expect a better
+prediction (smaller Brier score) from model $r^{(1)}$ is 50%. In
+uncensored data, $H^1_0$ and $H^2_0$ can be tested with a paired
+t-test and a paired Wilcoxon rank test, respectively.
+
+
+** COMMENT remarks about the null hypotheses
+
+Two risk prediction models can have the same expected Brier score
+whereas $\theta(t,X,T,r^{(1)},r^{(2)})$ is not symmetric around zero. For
+instance two models : the first overestimates with a bias $d$ and the
+second underestimates with the same bias $d$. The symmetry assumption
+is STRONGER.
+   
+If two risk prediction models have the same expected Brier Scores
+whereas $\theta(t,X,T,r^{(1)},r^{(2)})$ is no symmetric around zero then
+it implies that the risk prediction models can be improved. (proof
+seems clear because EBS is a mean of positive terms, then defining the
+risk prediction model by the risk prediction model among the two that
+have the minimal Brier Score for each covariate setting leads to a
+better risk prediction model).
+
+the integrated Brier score over the interval $[\tau_a,\tau_b]$ 
+\begin{equation*}
+
+\mbox{IBS}(\tau_1,\tau_2,X,T,r)=\int_{\tau_a}^{\tau_b}\Big\{
+\indic{T\leq t} - r(t,X) \Big\} ^2 dt,
+\end{equation*}
+ and the expected Brier
+score 
+\begin{equation*}
+\mbox{EBS}(t,r)=\mathbb{E}\Big\{ \indic{T\leq t} - r(t,X)
+\Big\} ^2.
+\end{equation*}
+ Finally, in order to compare two risk prediction models $r^{(1)}$
+and $r^{(2)}$, let define the differences:
+
+\begin{equation*}
+\theta(t,X,T,r^{(1)},r^{(2)})=\BS(t,X,T,r^{(1)})-\BS(t,X,T,r^{(2)}).
+\end{equation*}
+
+To compare the risk prediction models, the basic idea will be to see how
+$\theta(t,X,T,r^{(1)},r^{(2)})$ is distributed around zero.
+
+* Dealing with right censored data
+** Weighted residuals
+
+We assume that $T$ and $C$ are conditionally independent given $X$ and
+denote $G(t|x)=\P(C>t|X=x)$ for the conditional probability of not
+being censored by time $t$ given $x$. For an estimator $\hat{G}$ of
+$G$ we define the following inverse probability of censoring weights:
+\begin{equation*}
+\widehat{W}(t,X,\tilde{T},\Delta)=\frac{\indic{\tilde{T} >t}}{\hat{G}(t|X)} +\frac{\indic{\tilde{T}\leq t}\Delta}{\hat{G}(\tilde{T}|X)}.
+\end{equation*}
+These weights were derived in cite:gerds2006consistent for the
+survival case and in cite:Binder2009 for the case with competing
+risks. If $\hat G$ is \(\sqrt n\) consistent for $G$ and \(G(t|x)>0\)
+uniformly in \(x\) then the average of the weighted residuals is a
+consistent estimate of the expected Brier score:
+\begin{multline*}
+\frac 1 n \sum_{i=1}^n \widehat{W}(t,X_i,\tilde{T},\Delta_i)
+\left\{Y_i(t)-r(t|X_i)\right\}^2 
+- \E_{(T,D,X)} \left\{Y(t)-r(t|X)\right\}^2 = o_P(1).
+\end{multline*}
+This holds for any risk prediction model \(r\). In order to compare
+the two risk prediction models $r^{(1)}$ and $r^{(2)}$ based on the
+right censored data we define the weighted difference of Brier
+residuals for subject $i$:
+\begin{equation*}
+\tilde\theta_i(t)= \widehat{W}(t,X_i,\tilde{T},\Delta_i)\left[\left\{\indic{T_i\le t} - r^{(1)}(t|X_i) \right\}^2-\left\{\indic{T_i\le t} - r^{(2)}(t|X_i) \right\}^2\right].
+\end{equation*}
+
+** Jackknife pseudo-values
+
+More power because differences in predictions of censored also enter.
+
+
+* Test statistics 
+** One sample t-test
+
+To test H^{1}_0 we consider the test statistic
+\begin{equation*}
+\frac{\frac 1 n \sum_{i=1}^n \tilde\theta_i(t)}{\hat\sigma(t)}
+\end{equation*}
+where \(\hat\sigma(t)\) is an estimate of \(\mathrm{Var}(\tilde \theta_i(t))\).
+
+** Signed rank test
+
+*** Testing the weighted residuals fails
+   
+At first glance it appears attractive that the sign of the uncensored
+residual differences \(\theta_i(t)\) is the same as the sign of
+weighted residual differences \(\tilde\theta_i(t)\) may be tempted to
+apply Wilcoxon's signed rank test directly to the weighted
+residuals. However, in this section we show a setting where
+$\theta_i(t)$ is symmetric around zero but $\tilde\theta_i(t)$ is not.
+When Wilcoxon's signed rank test is applied directly to
+$\tilde\theta_i(t)$ in this setting it has inflated type-I error.
+
+#+BEGIN_SRC R :results silent  :exports none :session *R* :eval never
+set.seed(14071986)
+start.time <- Sys.time()
+source("~/Dropbox/MultiSplitTest/R/iidBS/iidKMcensoring.R")
+source("~/Dropbox/MultiSplitTest/R/iidBS/BSiidCorrelation.R")
+n <- 50000
+p <- 0.8
+T<-rexp(n)
+C <- rexp(n)
+time <- pmin(T,C)
+status <- as.numeric(T<C)
+
+X1 <- rbinom(n,size=1,prob=p)
+X2 <- rbinom(n,size=1,prob=p)
+d <- 0.05
+pi1 <- 0.5-d*X1+2*d*(1-X1) # +runif(n,min=-0.025,max=+0.025)
+pi2 <- 0.5+d*X2-2*d*(1-X2) # +runif(n,min=-0.025,max=+0.025)
+
+# {{{ compute ipcw residuals
+resultBS1 <- BS(timepoints=log(2),
+                times=time,
+                status=status,
+                pred=as.matrix(pi1),
+                cause=1,
+                compute.iid=FALSE)
+
+resultBS2 <- BS(timepoints=log(2),
+                times=time,
+                status=status,
+                pred=as.matrix(pi2),
+                cause=1,
+                compute.iid=FALSE)
+# }}}
+# compute uncensored residuals
+Event <- as.numeric(T<log(2))
+BS1.uncens <- (Event-pi1)^2
+BS2.uncens <- (Event-pi2)^2
+D12.uncens <- BS1.uncens-BS2.uncens
+
+stop.time <- Sys.time()
+difftime(stop.time,start.time,units="secs")
+
+# plot unsensored residuals
+#X11(width=10,height=5)
+#barplot(table(D12.uncens),col=c(rep("red",4),rep("blue",4)))
+pdf("~/Dropbox/MultiSplitTest/histoD12.pdf",width=10,height=7)
+layout(matrix(1:2,1,2))
+hist(D12.uncens,prob=TRUE,breaks=50,main="Uncensored residuals")
+rug(D12.uncens)
+# plot ipcw residuals
+BS1.ipcw <- resultBS1$res
+BS2.ipcw <- resultBS2$res
+D12.ipcw <- BS1.ipcw-BS2.ipcw   
+hist(D12.ipcw,prob=TRUE,breaks=50,main="IPCW residuals")
+rug(D12.ipcw)
+dev.off()
+#+END_SRC
+
+#+Caption: distribution of $\theta(t,X1,X_2,T,r^{(1)},r^{(2)})$ and $\tilde\theta(t,X,\tilde{T},\Delta,r^{(1)},r^{(2)})$. \label{fig:histo}
+#+ATTR_LaTeX: width=0.9\linewidth placement=[t!]
+#+results: R-graph
+[[file:~/Dropbox/MultiSplitTest/worg/histoD12.pdf]]
+
+\begin{example}
+Assume that $T$, $C$ are independent and let $X_1, X_2$ be two independent
+Bernoulli distributed random variables each with success probability
+$p=0.8$.  Let $m$ be the median of $T$, i.e $P(T>m)=P(T<m)=0.5$. Let
+$d>0$ be a small bias term, say d=0.05, and consider the following two
+risk prediction models
+\begin{align*}
+ r_1(t)&=0.5 -dX_1+2d(1-X_1)\intertext{}
+ r_2(t)&=0.5 +dX_2-2d(1-X_2)
+\end{align*}
+
+We remark that the distribution of $\indic{T<t}-r^{(1)}(t)$ is equal
+to the distribution of $-\left(\indic{T<t}-r^{(2)}(t)\right).$ Therefore, 
+the distribution of the Brier Scores for the two models are the same,
+and the distribution of the difference of the two Brier scores is symmetric
+ around zero. 
+
+There are \(2^3=8\) different possible values for
+$\theta(t,X1,X_2,T,r^{(1)},r^{(2)})$. The distribution of
+$\theta(t,X1,X_2,T,r^{(1)},r^{(2)})$ is summarized in Figure
+\ref{fig:histo}.
+
+To illustrate how far the  difference of the IPCW residuals $\tilde\theta(t,X,\tilde{T},\Delta,r^{(1)},r^{(2)})$ is from symmetric around zero, we have generated the time-to-event $T$
+and the censoring time $C$ from exponential distributions (with rate=1, and consequently $t=log(2)$). The Figure \ref{fig:histo} displays the results with a random sample of n=50 000 subjects.
+
+In addition, we remark that the probabilities of observing $\tilde\theta(t,X,\tilde{T},\delta,r^{(1)},r^{(2)})$ positive or negative are different. In this simulation, we observe the frequencies
+
+|   D12>0 |   D12<0 |
+| 0.49856 | 0.50144 |
+  
+and
+| $\tilde\theta12 >0$ | $\tilde\theta12<0$ | $\tilde\theta12=0$ |
+|                   0.29264 |                  0.33048 |                  0.37584 |
+
+As a matter of fact, for this simulation scenario, the probabilities of  D12>0 and  D12<0 are equal to 0.5, and  the probabilities of $\tilde\theta12$ is positive, negative and null are respectively equal to  $0.25\times0.8^2 + 0.375\times(1-0.8^2)=0.295$, $0.25\times(1-0.8^2) + 0.375\times0.8^2 =0.33$ and $(1-0.5^2)/2=0.375$.
+\end{example}
+
+** What we could do : IPCW Wilcoxon
+We could compute an Inverse Probability of Censoring Weighted  Wilcoxon test statistic,  
+
+#+BEGIN_LaTeX
+\begin{equation*}
+U=\frac{1}{n(n-1)} \mathop{\sum\sum}_{j<j}  \widehat{W}(t,\tilde{T}_i,\Delta_i)  \widehat{W}(t,\tilde{T}_j,\Delta_j) \indic{e_i(t)+e_j(t)>0}
+\end{equation*}
+#+END_LaTeX
+
+where $e_i(t)$ is defined by $\left(\indic{\tilde{T}_i >t} +
+\indic{\tilde{T}_i \leq t}\Delta_i \right) \times
+\theta(t,X_i,T_i,r^{(1)},r^{(2)})$, i.e the difference of the
+residuals if are able to compute the residuals, O otherwise. Let
+recall that we are able to compute the Brier score residuals when
+$\tilde{T}_i >t$ or when $\tilde{T}_i \leq t$ and $\Delta_i=1$.
+
+
+Weighting with Kaplan-Meier estimator (i.e : assuming that censoring
+does not depend on covariates), we are able to compute the Hajek
+projection of this test statistics. More precisely, we can show that
+
+#+BEGIN_LaTeX
+\begin{equation*}
+\sqrt{n}\left( U- \theta - \hat{U} \right)  \stackrel{P}{\longrightarrow} 0
+\end{equation*}
+#+END_LaTeX
+
+where
+
+#+BEGIN_LaTeX
+\begin{equation*}
+\hat{U}=\frac{1}{n}\sum_{i=1}^n \mbox{IF}(t,\tilde{T}_i,\Delta_i,e_i(t))
+\end{equation*}
+#+END_LaTeX
+
+# with $E\{\mbox{IF}(t,\tilde{T}_i,\Delta_i,e_i(t)) \}=0$ under the null
+# $H_0: \quad \D(t,X,T,r^{(1)},r^{(2)})$ \emph{is symmetric around
+# zero}. The variance of $\hat{U}$ can be consistently estimated by the
+# empirical variance estimator of $\frac{1}{n} \sum_{i=1}^n
+# \widehat{\mbox{IF}}(t,\tilde{T}_i,\Delta_i,e_i(t))$, where
+# $\widehat{\mbox{IF}}(t,\tilde{T}_i,\Delta_i,e_i(t))$ is defined by
+# plug-in Kaplan-Meier and Nelson-Aalen estimator.
+
+# [[~/Dropbox/MultiSplitTest/iidCensoredWilcoxon2.pdf][ For details, see the ~/Dropbox/MultiSplitTest/iidCensoredWilcoxon2.pdf]]
+# [[/home/paulo/Dropbox/MultiSplitTest/R/IPCWWilcoxonSumRankTest][ See the directory ~/Dropbox/MultiSplitTest/R/IPCWWilcoxonSumRankTest for R code and Example]]
+
+
+# Instead of testing : $H_0: \quad \D(t,X,T,r^{(1)},r^{(2)})$
+# \emph{is symmetric around zero}. We could more simply test :
+#
+# \begin{equation*}
+# \boxed{H_0: \quad E \big[\D(t,X,T,r^{(1)},r^{(2)}) \big]
+# =0}
+# \end{equation*}
+ # i.e the two risk prediction models have the same expected Brier score
+# (the same quadratic error at time $t$). Let remark that this null
+# hypothesis can be seen more natural as this corresponds to test if the
+# two models have the same score for a ``strictly proper scoring
+# rule".\\
+# To do this, again, we can use an iid representation of the expected
+# Brier Score at time t; similarly as explained in the previous section.
+# Details of the "maths" and implementation in R are already done (for
+# my other project with Helene about validation of dynamic prediction
+# accuracy for joint model for time-to-event and longitudinal
+# biomarker).  Details are available at [[~/Dropbox/MultiSplitTest/iidbrierscore.pdf][see
+# ~/Dropbox/MultiSplitTest/iidbrierscore.pdf]] and R code and Example are
+# available at [[~/Dropbox/MultiSplitTest/R/iidBS]]
+
+
+\bibliographystyle{apalike}
+bibliography:PredictionModels.bib
+
+* HEADER :noexport:
+
+#+TITLE: Testing differences between two risk predictions in censored data
+# #+EMAIL: Paul.Blanche@isped.u-bordeaux2.fr
+#+LANGUAGE:  en
+#+OPTIONS:   H:3 num:t toc:nil \n:nil @:t ::t |:t ^:t -:t f:t *:t <:t
+#+OPTIONS:   TeX:t LaTeX:t skip:nil d:t todo:t pri:nil tags:not-in-toc author:nil
+#+LaTeX_CLASS: org-article
+#+LaTeX_HEADER:\usepackage{authblk}
+# #+LaTeX_HEADER:\author{Paul Blanche and Thomas Alexander Gerds and Michael W Kattan}
+# #+LaTeX_HEADER:\affil{Department of Biostatistics, University of Copenhagen}
+#+LATEX_HEADER: \newcommand{\indic}[1]{1{(#1)}}
+#+LATEX_HEADER: \newcommand{\E}{\ensuremath{\operatorname{E}}}
+#+LATEX_HEADER: \renewcommand{\P}{\ensuremath{\operatorname{P}}}
+#+LATEX_HEADER: \newcommand{\BS}{\text{BS}}
+#+LATEX_HEADER: \newcommand{\hatBS}{\widehat{\text{BS}}}
+#+LATEX_HEADER: \newtheorem{lemma}{Lemma}
+#+LATEX_HEADER: \newtheorem{example}{example}
+#+LATEX_HEADER: \newtheorem{prop}{Proposition}
+#+LaTeX_HEADER:\usepackage[T1]{fontenc}
+#+LaTeX_HEADER:\renewcommand*\familydefault{\sfdefault}
+#+PROPERTY: session *R*
+#+PROPERTY: cache yes
+

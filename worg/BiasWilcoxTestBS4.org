@@ -1,0 +1,257 @@
+:PROPERTIES:
+#+TITLE: Example showing that Wilcoxon test for weighted residuals is  incorrect
+#+EMAIL: Paul.Blanche@isped.u-bordeaux2.fr
+#+LANGUAGE:  en
+#+OPTIONS:   H:3 num:t toc:nil \n:nil @:t ::t |:t ^:t -:t f:t *:t <:t
+#+OPTIONS:   TeX:t LaTeX:t skip:nil d:nil todo:t pri:nil tags:not-in-toc author:nil
+#+LaTeX_HEADER:\usepackage{authblk}
+#+LaTeX_HEADER:\usepackage{tikz}
+#+LaTeX_HEADER:\usepackage{natbib}
+#+LaTeX_HEADER:\usepackage{lscape}
+#+LaTeX_HEADER:\usepackage[table,usenames,dvipsnames]{xcolor}
+#+LaTeX_HEADER:\definecolor{lightGray}{gray}{0.98}
+#+LaTeX_HEADER:\definecolor{medioGray}{gray}{0.83}
+#+LaTeX_HEADER:\rowcolors{1}{medioGray}{lightGray}
+#+LaTeX_HEADER:\usepackage{attachfile}
+#+LaTeX_HEADER:\usepackage{array}
+#+LaTeX_HEADER:\usepackage{amsmath}
+#+LaTeX_HEADER:\usepackage[T1]{fontenc}
+#+LaTeX_HEADER:\renewcommand*\familydefault{\sfdefault}
+#+LaTeX_HEADER:\author{Paul Blanche and Thomas Gerds}
+#+LaTeX_HEADER:\affil{Department of Biostatistics, Universite Bordeaux Segalen \\ and  Department of Biostatistics, University of Copenhagen}
+#+LaTeX_HEADER:\newcommand{\sfootnote}[1]{\renewcommand{\thefootnote}{\fnsymbol{footnote}}\footnote{#1}\setcounter{footnote}{0}\renewcommand{\thefootnote}{\arabic{foot note}}}
+#+LaTeX_HEADER:\makeatletter\def\blfootnote{\xdef\@thefnmark{}\@footnotetext}\makeatother
+#+EXPORT_SELECT_TAGS: export
+#+EXPORT_EXCLUDE_TAGS: noexport
+#+LaTeX_HEADER \itemsep2pt
+#+COLUMNS: %40ITEM %10BEAMER_env(Env) %9BEAMER_envargs(Env Args) %4BEAMER_col(Col) %10BEAMER_extra(Extra)
+#+LaTeX_HEADER: \usepackage{color}
+#+LATEX_HEADER: \lstset{
+#+LATEX_HEADER: keywordstyle=\color{blue},
+#+LATEX_HEADER: commentstyle=\color{red},
+#+LATEX_HEADER: stringstyle=\color[rgb]{0,.5,0},
+#+LATEX_HEADER: basicstyle=\ttfamily\small,
+#+LATEX_HEADER: columns=fullflexible,
+#+LATEX_HEADER: breaklines=true,        % sets automatic line breaking
+#+LATEX_HEADER: breakatwhitespace=false,    % sets if automatic breaks should only happen at whitespace
+#+LATEX_HEADER: numbers=left,
+#+LATEX_HEADER: numberstyle=\ttfamily\tiny\color{gray},
+#+LATEX_HEADER: stepnumber=1,
+#+LATEX_HEADER: numbersep=10pt,
+#+LATEX_HEADER: backgroundcolor=\color{white},
+#+LATEX_HEADER: tabsize=4,
+#+LATEX_HEADER: showspaces=false,
+#+LATEX_HEADER: showstringspaces=false,
+#+LATEX_HEADER: xleftmargin=.23in,
+#+LATEX_HEADER: frame=single,
+#+LATEX_HEADER: basewidth={0.5em,0.4em}
+#+LATEX_HEADER: }
+#+LATEX_HEADER: \newcommand{\indic}[1]{1\!\! 1{(#1)}}
+#+LATEX_HEADER: \newtheorem{lemma}{Lemma}
+#+LATEX_HEADER: \newtheorem{prop}{Proposition}
+#+LATEX_HEADER: \newtheorem{res}{Result}
+#+LATEX_HEADER: \newtheorem{rk}{Remark}
+#+LATEX_HEADER: \newtheorem{ex}{Example}
+#+PROPERTY: session *R* 
+#+PROPERTY: cache yes
+#+PROPERTY: colnames yes
+:END:
+* Notations and definitions
+** Notations
+Let $T$  denote the event-time, $C$ the censoring time and $\Delta=\indic{T \leq C}$ the censoring indicator.
+ Let $\tilde{T}=\min(T,C)$ denote the observed time. Hereafter, we denote $G(t|X)=P(C>t|X)$ and $\hat{G}(t|X)$ its estimator.
+ Let $\pi(t;X)$ be a prediction rule, i.e an estimator of the probability $P(T\leq t |X)$. We assume here that the prediction rule $\pi$ was previously built using an independent learning data set.\\
+We observe the i.i.d sample of $n$ subjects $\lbrace (\tilde{T}_i,\delta_i,\pi(t;X_i)), i=1,\dots,n \rbrace$.\\
+
+** Definitions of what we aim to estimate
+Let define the Brier score for $\pi$ at time $t$
+$$\mbox{BS}(t,X,T,\pi)=\Big\{ \indic{T\leq t} - \pi(t;X) \Big\} ^2,$$
+the integrated Brier score over the interval $[\tau_1,\tau_2]$
+$$ \mbox{IBS}(\tau_1,\tau_2,X,T,\pi)=\int_{\tau_1}^{\tau_2}\Big\{ \indic{T\leq t} - \pi(t;X) \Big\} ^2 dt,$$
+and  the expected Brier score 
+$$\mbox{EBS}(t,\pi)=\mathbb{E}\Big\{ \indic{T\leq t} - \pi(t;X) \Big\} ^2.$$
+Finally, in order to compare two prediction rules $\pi_1$ and $\pi_2$, let define the differences:
+$$\mbox{D}_{12}(t,X,T,\pi_1,\pi_2)=\mbox{BS}(t,X,T,\pi_1)-\mbox{BS}(t,X,T,\pi_2).$$
+To compare the prediction rules, the basic idea will be to see how  $\mbox{D}_{12}(t,X,T,\pi_1,\pi_2)$ is distributed around zero.
+
+** Definitions of IPCW estimates
+Let define
+$$\widehat{\mbox{BS}}(t,X,\tilde{T},\delta,\pi)=\widehat{W}(t,X,\tilde{T},\delta)\Big(\indic{\tilde{T}\leq t} - \pi(t;X) \Big) ^2$$
+and 
+$$ \widehat{\mbox{EBS}}(t,\pi)  =\frac{1}{n} \sum_{i=1}^{n} \widehat{\mbox{BS}}(t,X_i,\tilde{T}_i,\delta_i,\pi)$$
+where
+$$\widehat{W}(t,X,\tilde{T},\Delta)=\frac{\indic{\tilde{T} >t}}{\hat{G}(t|X)}  +\frac{\indic{\tilde{T}\leq t}\Delta}{\hat{G}(\tilde{T}|X)}.$$
+Finally, in order to compare two prediction rules $\pi_1$ and $\pi_2$, let define the differences:
+$$\widehat{\mbox{D}}_{12}(t,X,\tilde{T},\Delta,\pi_1,\pi_2)=\widehat{\mbox{BS}}(t,X,\tilde{T},\Delta,\pi_1)-\widehat{\mbox{BS}}(t,X,\tilde{T},\Delta,\pi_2).$$
+Because $\Delta=1\Rightarrow \tilde{T}=T$ and $\forall t, \indic{\tilde{T}>t}=1 \Rightarrow \indic{T>t}=1$, then we have the equation
+$$\boxed{\widehat{\mbox{D}}_{12}(t,X,\tilde{T},\Delta,\pi_1,\pi_2)=\widehat{W}(t,X,\tilde{T},\Delta)\mbox{D}_{12}(t,X,T,\pi_1,\pi_2)}$$
+* Wilcoxon sum rank test
+Let $\{e_i, i=1,\dots,n \}$ be iid, and let define 
+$$U=\frac{1}{n(n-1)} \mathop{\sum\sum}_{j<j}\indic{e_i+e_j>0}$$
+and $\theta=E(U)$. The Hajek projection of $U-\theta$ is:
+$$\hat{U}=-\frac{2}{n}\sum_{i=1}^n \left\{F(-e_i) - E(F(-e_i))  \right\}$$
+where $F(\cdot)$ is the cumulative distribution function of $e$.\\ 
+See van der Vaart book (Asymptotic Statistics), page 157 for Hajek projection principle and page 163 for this projection $\hat{U}$. \\
+As a consequence of U-statistics theory (van der Vaart, chapter 12, theorem 12.3) :
+$$\sqrt{n}\left( U- \theta - \hat{U} \right)  \stackrel{P}{\longrightarrow} 0$$
+Under the null hypothesis 
+$$\boxed{H_0: \forall x \quad F(x)+F(-x)=1}$$
+(symmetry around zero), we have $\theta=P(e_i<-e_j)=EF(-e_j)=E(1-F(e_j))=E(U[0,1])=1/2$ and $\mbox{Var}(F(-e_i))= \mbox{Var}(U[0,1]) = 1/12$.
+Then it follows that
+$$\sqrt{n}\left( U - 1/2 \right)  \stackrel{\mathcal{D}}{\longrightarrow} \mathcal{N} \left( 0, 1/3 \right)$$
+* On Wilcoxon sum rank test for Brier score with censored data
+
+In order to test whether or not one of the two prediction models is
+better than the other one, we would like to apply a one-sided Wilcoxon
+sum rank test on the "difference of residuals" defined by
+$\mbox{D}_{12}(t,X,T,\pi_1,\pi_2)$, in order to test\\
+
+$H_0: \quad \mbox{D}_{12}(t,X,T,\pi_1,\pi_2)=\mbox{BS}(t,X,T,\pi_1)-\mbox{BS}(t,X,T,\pi_2)$ \emph{is symmetric around zero}.\\
+
+** What we cannot do
+
+Due to censoring we cannot oberve $\mbox{D}_{12}(t,X,T,\pi_1,\pi_2)$. An idea could be to use $\widehat{\mbox{D}}_{12}(t,X,\tilde{T},\Delta,\pi_1,\pi_2)$ instead of $\mbox{D}_{12}(t,X,T,\pi_1,\pi_2)$. 
+Nevertheless, we have the following remark:
+#+begin_latex
+\begin{rk}
+\label{rk1}
+It exists settings for which $\mbox{D}_{12}(t,X,T,\pi_1,\pi_2)$ is symmetric around zero 
+whereas  $\widehat{\mbox{D}}_{12}(t,X,\tilde{T},\Delta,\pi_1,\pi_2)$ is not symmetric around zero. 
+\end{rk}
+#+end_latex
+As a consequence, using the ``weighted difference" $\widehat{\mbox{D}}_{12}(t,X,\tilde{T},\Delta,\pi_1,\pi_2)$ as "input" in the Wilcoxon sum rank test,
+it exists some settings for which we will reject the null hypothesis too often only due to censoring. As a consequence, this idea does not control the Type one error. \\
+#+begin_latex
+\begin{ex}
+\label{ex1}
+Let $T$,$C$ two independent failure times. Let $X_1,X_2$ be two independent Bernoulli distributed random variables, with probability $p$, say $p=0.8$, to be equal to one and $1-p$ to be equal to zero.
+Let $t$ be the median of $T$, i.e  $P(T>t)=P(T<t)=0.5$. Let $d>0$ be a small bias term, say d=0.05,  and let  be the two "toy prediction rules"
+$$ \pi_1(t)=0.5 -dX_1+2d(1-X_1)$$
+and 
+$$ \pi_2(t)=0.5 +dX_2-2d(1-X_2)$$
+Let remark that the distribution of $\indic{T<t}-\pi_1(t)$ is equal to the distribution of $-\left(\indic{T<t}-\pi_2(t)\rght).$ Therefore, the distribution of the Brier Scores for the two models are the same,
+ and the distribution of the difference of the two Brier scores is symmetric around zero. 
+\end{ex}
+#+end_latex
+There are 2^3=8 different possible values for $\mbox{D}_{12}(t,X1,X_2,T,\pi_1,\pi_2)$. The distribution of $\mbox{D}_{12}(t,X1,X_2,T,\pi_1,\pi_2)$ is summarized in Figure \ref{fig:histo}.
+
+#+BEGIN_SRC R :results silent  :exports none :session *R* 
+  set.seed(14071986)
+  start.time <- Sys.time()
+  source("~/Dropbox/MultiSplitTest/R/iidBS/iidKMcensoring.R")
+  source("~/Dropbox/MultiSplitTest/R/iidBS/BSiidCorrelation.R")
+  
+  n <- 50000
+  p <- 0.8
+  T<-rexp(n)
+  C <- rexp(n)
+  time <- pmin(T,C)
+  status <- as.numeric(T<C)
+  
+  X1 <- rbinom(n,size=1,prob=p)
+  X2 <- rbinom(n,size=1,prob=p)
+  d <- 0.05
+  pi1 <- 0.5-d*X1+2*d*(1-X1) # +runif(n,min=-0.025,max=+0.025)
+  pi2 <- 0.5+d*X2-2*d*(1-X2) # +runif(n,min=-0.025,max=+0.025)
+  
+  # {{{ compute ipcw residuals
+  resultBS1 <- BS(timepoints=log(2),
+                  times=time,
+                  status=status,
+                  pred=as.matrix(pi1),
+                  cause=1,
+                  compute.iid=FALSE)
+  
+  resultBS2 <- BS(timepoints=log(2),
+                  times=time,
+                  status=status,
+                  pred=as.matrix(pi2),
+                  cause=1,
+                  compute.iid=FALSE)
+  # }}}
+  # compute uncensored residuals
+  Event <- as.numeric(T<log(2))
+  BS1.uncens <- (Event-pi1)^2
+  BS2.uncens <- (Event-pi2)^2
+  D12.uncens <- BS1.uncens-BS2.uncens
+  
+  stop.time <- Sys.time()
+  difftime(stop.time,start.time,units="secs")
+  
+  # plot unsensored residuals
+  #X11(width=10,height=5)
+  #barplot(table(D12.uncens),col=c(rep("red",4),rep("blue",4)))
+  pdf("~/Dropbox/draftMultiSplitTest/histoD12.pdf",width=10,height=7)
+  layout(matrix(1:2,1,2))
+  hist(D12.uncens,prob=TRUE,breaks=50,main="Uncensored residuals")
+  rug(D12.uncens)
+  # plot ipcw residuals
+  BS1.ipcw <- resultBS1$res
+  BS2.ipcw <- resultBS2$res
+  D12.ipcw <- BS1.ipcw-BS2.ipcw   
+  hist(D12.ipcw,prob=TRUE,breaks=50,main="IPCW residuals")
+  rug(D12.ipcw)
+  dev.off()
+#+END_SRC
+
+#+Caption: distribution of $\mbox{D}_{12}(t,X1,X_2,T,\pi_1,\pi_2)$ and $\widehat{\mbox{D}}_{12}(t,X,\tilde{T},\Delta,\pi_1,\pi_2)$. \label{fig:histo}
+#+ATTR_LaTeX: width=0.9\linewidth placement=[t!]
+#+results: R-graph
+[[file:~/Dropbox/draftMultiSplitTest/histoD12.pdf]]
+
+To illustrate how far the  difference of the IPCW residuals $\widehat{\mbox{D}}_{12}(t,X,\tilde{T},\Delta,\pi_1,\pi_2)$ is from symmetric around zero, we have generated the time-to-event $T$
+and the censoring time $C$ from exponential distributions (with rate=1, and consequently $t=log(2)$). The Figure \ref{fig:histo} displays the results with a random sample of n=50 000 subjects.
+
+In addition, we remark that the probabilities of observing $\widehat{\mbox{D}}_{12}(t,X,\tilde{T},\delta,\pi_1,\pi_2)$ positive or negative are different. In this simulation, we observe the frequencies
+
+|   D12>0 |   D12<0 |
+| 0.49856 | 0.50144 |
+  
+and
+| \widehat{\mbox{D}}12 >0 | \widehat{\mbox{D}}12<0 | \widehat{\mbox{D}}12=0 |
+|                 0.29264 |                0.33048 |                0.37584 |
+
+As a matter of fact, for this simulation scenario, the probabilities of  D12>0 and  D12<0 are equal to 0.5, and  the probabilities of $\widehat{\mbox{D}}12$ is positive, negative and null are respectively equal to  $0.25\times0.8^2 + 0.375\times(1-0.8^2)=0.295$, $0.25\times(1-0.8^2) + 0.375\times0.8^2 =0.33$ and $(1-0.5^2)/2=0.375$.
+
+** What we could do : IPCW Wilcoxon
+We could compute an Inverse Probability of Censoring Weighted  Wilcoxon test statistic,  
+$$
+U=\frac{1}{n(n-1)} \mathop{\sum\sum}_{j<j}  \widehat{W}(t,\tilde{T}_i,\Delta_i)  \widehat{W}(t,\tilde{T}_j,\Delta_j) \indic{e_i(t)+e_j(t)>0}
+$$
+where $e_i(t)$ is defined by $\left(\indic{\tilde{T}_i >t} + \indic{\tilde{T}_i \leq t}\Delta_i \right) \times \mbox{D}_{12}(t,X_i,T_i,\pi_1,\pi_2)$, i.e the difference of the residuals if are able to compute the residuals, O otherwise. Let recall that we are able to compute the Brier score residuals when $\tilde{T}_i >t$ or when  $\tilde{T}_i \leq t$ and $\Delta_i=1$.
+
+
+Weighting with Kaplan-Meier estimator (i.e : assuming that censoring does not depend on covariates), we are able to compute the Hajek projection of this test statistics. More precisely, we can show that 
+$$\sqrt{n}\left( U- \theta - \hat{U} \right)  \stackrel{P}{\longrightarrow} 0$$
+where 
+$$\hat{U}=\frac{1}{n}\sum_{i=1}^n \mbox{IF}(t,\tilde{T}_i,\Delta_i,e_i(t))$$
+with $E\{\mbox{IF}(t,\tilde{T}_i,\Delta_i,e_i(t)) \}=0$ under the null  $H_0: \quad \mbox{D}_{12}(t,X,T,\pi_1,\pi_2)$ \emph{is symmetric around zero}. The variance of $\hat{U}$ can be consistently estimated by the empirical variance estimator of $\frac{1}{n} \sum_{i=1}^n \widehat{\mbox{IF}}(t,\tilde{T}_i,\Delta_i,e_i(t))$, where $\widehat{\mbox{IF}}(t,\tilde{T}_i,\Delta_i,e_i(t))$ is defined by plug-in Kaplan-Meier and Nelson-Aalen estimator. 
+
+[[~/Dropbox/MultiSplitTest/iidCensoredWilcoxon2.pdf][For details, see the ~/Dropbox/MultiSplitTest/iidCensoredWilcoxon2.pdf]]
+[[/home/paulo/Dropbox/MultiSplitTest/R/IPCWWilcoxonSumRankTest][See the directory ~/Dropbox/MultiSplitTest/R/IPCWWilcoxonSumRankTest for R code and Example]]
+
+* Alternative : t-test like
+Instead of testing :  $H_0: \quad \mbox{D}_{12}(t,X,T,\pi_1,\pi_2)$ \emph{is symmetric around zero}. We could more simply test :
+$$\boxed{H_0: \quad E \big[\mbox{D}_{12}(t,X,T,\pi_1,\pi_2) \big] =0}$$
+i.e the two prediction rules have the same expected Brier score (the same quadratic error at time $t$). Let remark that this null hypothesis can be seen more natural as this corresponds
+ to test if the two models have the same score for a ``strictly proper scoring rule".\\
+To do this, again, we can use an iid representation of the expected Brier Score at time t; similarly as explained in the previous section. 
+Details of the "maths" and implementation in R are already done (for my other project with Helene about validation of dynamic prediction accuracy for joint model for time-to-event and longitudinal biomarker).
+Details are available at [[~/Dropbox/MultiSplitTest/iidbrierscore.pdf][see ~/Dropbox/MultiSplitTest/iidbrierscore.pdf]]
+and R code and Example are available at [[~/Dropbox/MultiSplitTest/R/iidBS]]
+
+** Remark about the two $H_0$
+
+ - Two prediction rules can have the same Expected Brier score whereas
+   $\mbox{D}_{12}(t,X,T,\pi_1,\pi_2)$ is NOT symmetric around
+   zero. For instance two models : the first overestimates with a bias
+   $d$ and the second underestimates with the same bias $d$. The
+   symmetry assumption is STRONGER.
+   
+ - If two prediction rules have the same expected Brier Scores whereas
+   $\mbox{D}_{12}(t,X,T,\pi_1,\pi_2)$ is NOT symmetric around zero
+   then it implies that the prediction rules can be improved. (proof
+   seems clear because EBS is a mean of positive terms, then defining
+   the prediction rule by the prediction rule among the two that have
+   the minimal Brier Score for each covariate setting leads to a
+   better prediction rule).
